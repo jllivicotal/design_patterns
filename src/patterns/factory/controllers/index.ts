@@ -1,0 +1,1 @@
+export { ActivoController } from './activo.controller';

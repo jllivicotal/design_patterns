@@ -1,0 +1,1 @@
+export { VehiculoController } from './vehiculo.controller';

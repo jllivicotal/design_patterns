@@ -1,0 +1,90 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./data/app.db"
+}
+
+
+// Modelo del patrón Builder - Vehículos
+model Propietario {
+  codigo    Int       @id @default(autoincrement())
+  nombre    String
+  vehiculos Vehiculo[]
+  
+  @@map("propietarios")
+}
+
+model Vehiculo {
+  codigo           Int          @id @default(autoincrement())
+  nombre           String
+  pais             String
+  placa            String       @unique
+  tipo             TipoVehiculo
+  propietarioId    Int?
+  propietario      Propietario? @relation(fields: [propietarioId], references: [codigo])
+  
+  // Campos específicos para Auto
+  numPuertas       Int?
+  
+  // Campos específicos para Camioneta
+  traccion         String?
+  
+  // Campos específicos para Camion
+  capacidadTon     Float?
+  
+  @@map("vehiculos")
+}
+
+enum TipoVehiculo {
+  AUTO
+  CAMIONETA
+  CAMION
+}
+
+// Modelo del patrón Factory - Activos Fijos
+model ActivoFijo {
+  codigo    Int         @id @default(autoincrement())
+  nombre    String
+  precio    Float
+  tipo      TipoActivo
+  
+  // Opciones agrupadas (JSON)
+  vidaUtilMeses     Int?
+  marca             String?
+  modelo            String?
+  serie             String?
+  color             String?
+  dimensiones       String?
+  material          String?
+  placaVehiculo     String?
+  
+  // Campos específicos para Computador
+  cpu               String?
+  ramGB             Int?
+  
+  // Campos específicos para Mesa
+  materialMesa      String?
+  
+  // Campos específicos para AutoAF
+  placa             String?
+  
+  // Campos específicos para Silla
+  ergonomica        Boolean?
+  
+  @@map("activos_fijos")
+}
+
+enum TipoActivo {
+  COMPUTADOR
+  MESA
+  AUTO
+  SILLA
+  OTRO
+}
