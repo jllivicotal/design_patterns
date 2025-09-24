@@ -23,6 +23,9 @@ export class VehiculoServicio implements IVehiculoServicio {
       if (error instanceof BadRequestException) {
         throw error;
       }
+      // Log detallado para diagnóstico
+      // eslint-disable-next-line no-console
+      console.error('[VehiculoServicio][crear] Error interno:', error);
       throw new BadRequestException('Error al crear el vehículo');
     }
   }
@@ -83,7 +86,7 @@ export class VehiculoServicio implements IVehiculoServicio {
   }
 
   private async buscarPorPlaca(placa: string): Promise<Vehiculo | null> {
-    const vehiculos = await this.repository.listar();
-    return vehiculos.find(v => v.getPlaca() === placa) || null;
+    // El repositorio siempre debe implementar buscarPorPlaca; usamos cast directo.
+    return (this.repository as any).buscarPorPlaca(placa);
   }
 }

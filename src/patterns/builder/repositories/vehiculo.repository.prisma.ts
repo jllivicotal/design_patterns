@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaClient } from '../../../../generated/prisma';
 import { IVehiculoRepositorio } from './vehiculo.repository.interface';
 import { Vehiculo, Auto, Camioneta, Camion, TipoVehiculo } from '../models';
 import { VehiculoBuilder } from '../builders';
+import { PrismaClient, Prisma } from '@prisma/client';
 
 @Injectable()
 export class VehiculoRepositorioPrisma implements IVehiculoRepositorio {
@@ -13,30 +13,46 @@ export class VehiculoRepositorioPrisma implements IVehiculoRepositorio {
   }
 
   async crear(vehiculo: Vehiculo): Promise<Vehiculo> {
-    const data = this.vehiculoToData(vehiculo);
-    
-    const created = await this.prisma.vehiculo.create({
-      data,
-      include: {
-        propietario: true,
-      },
-    });
-
-    return this.dataToVehiculo(created);
+    const data = this.vehiculoToData(vehiculo, true);
+    try {
+      const created = await this.prisma.vehiculo.create({
+        data,
+        include: { propietario: true },
+      });
+      return this.dataToVehiculo(created);
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        if (error.code === 'P2002' && (error.meta as any)?.target?.includes('placa')) {
+          throw new Error(`Ya existe un vehículo con la placa ${vehiculo.getPlaca()}`);
+        }
+        if (error.code === 'P2003') {
+          throw new Error('El propietario especificado no existe');
+        }
+      }
+      throw error;
+    }
   }
 
   async modificar(codigo: number, vehiculo: Vehiculo): Promise<Vehiculo> {
     const data = this.vehiculoToData(vehiculo);
-    
-    const updated = await this.prisma.vehiculo.update({
-      where: { codigo },
-      data,
-      include: {
-        propietario: true,
-      },
-    });
-
-    return this.dataToVehiculo(updated);
+    try {
+      const updated = await this.prisma.vehiculo.update({
+        where: { codigo },
+        data,
+        include: { propietario: true },
+      });
+      return this.dataToVehiculo(updated);
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        if (error.code === 'P2002' && (error.meta as any)?.target?.includes('placa')) {
+          throw new Error(`Ya existe otro vehículo con la placa ${vehiculo.getPlaca()}`);
+        }
+        if (error.code === 'P2025') {
+          throw new Error(`Vehículo con código ${codigo} no encontrado`);
+        }
+      }
+      throw error;
+    }
   }
 
   async eliminar(codigo: number): Promise<void> {
@@ -66,15 +82,30 @@ export class VehiculoRepositorioPrisma implements IVehiculoRepositorio {
     return vehiculo ? this.dataToVehiculo(vehiculo) : null;
   }
 
-  private vehiculoToData(vehiculo: Vehiculo): any {
-    const baseData = {
-      codigo: vehiculo.getCodigo(),
+  async buscarPorPlaca(placa: string): Promise<Vehiculo | null> {
+    const vehiculo = await this.prisma.vehiculo.findUnique({
+      where: { placa },
+      include: { propietario: true },
+    });
+    return vehiculo ? this.dataToVehiculo(vehiculo) : null;
+  }
+
+  private vehiculoToData(vehiculo: Vehiculo, isCreate = false): any {
+    // Si estamos creando y el código es 0 (valor por defecto del builder), lo omitimos
+    // para permitir que la BD (autoincrement) asigne el valor.
+    const includeCodigo = !isCreate || vehiculo.getCodigo() > 0;
+
+    const baseData: any = {
       nombre: vehiculo.getNombre(),
       pais: vehiculo.getPais(),
       placa: vehiculo.getPlaca(),
       tipo: vehiculo.getTipo(),
-      propietarioId: vehiculo.getPropietarioId(),
+      propietarioId: vehiculo.getPropietarioId() ?? undefined,
     };
+
+    if (includeCodigo) {
+      baseData.codigo = vehiculo.getCodigo();
+    }
 
     switch (vehiculo.getTipo()) {
       case TipoVehiculo.AUTO:

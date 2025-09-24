@@ -1,49 +1,30 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-
-// Builder Pattern - Vehículos
+// Builder Pattern
 import { VehiculoController } from './patterns/builder/controllers';
 import { VehiculoServicio } from './patterns/builder/services';
 import { VehiculoRepositorioPrisma } from './patterns/builder/repositories';
-
-// Factory Pattern - Activos Fijos
+// Factory Pattern
 import { ActivoController } from './patterns/factory/controllers';
 import { ActivoServicio } from './patterns/factory/services';
 import { ActivoRepositorioPrisma } from './patterns/factory/repositories';
-import { ActivoFijoFactorySimple } from './patterns/factory/factories';
 
 @Module({
-  imports: [],
-  controllers: [
-    AppController, 
-    VehiculoController,
-    ActivoController,
+  imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+      expandVariables: true,
+    }),
   ],
+  controllers: [AppController, VehiculoController, ActivoController],
   providers: [
     AppService,
-    // Builder Pattern providers
-    {
-      provide: 'IVehiculoServicio',
-      useClass: VehiculoServicio,
-    },
-    {
-      provide: 'IVehiculoRepositorio',
-      useClass: VehiculoRepositorioPrisma,
-    },
-    // Factory Pattern providers
-    {
-      provide: 'IActivoServicio',
-      useClass: ActivoServicio,
-    },
-    {
-      provide: 'IActivoRepositorio',
-      useClass: ActivoRepositorioPrisma,
-    },
-    {
-      provide: 'IActivoFijoFactory',
-      useClass: ActivoFijoFactorySimple,
-    },
+    { provide: 'IVehiculoRepositorio', useClass: VehiculoRepositorioPrisma },
+    { provide: 'IVehiculoServicio', useClass: VehiculoServicio },
+    { provide: 'IActivoRepositorio', useClass: ActivoRepositorioPrisma },
+    { provide: 'IActivoServicio', useClass: ActivoServicio },
   ],
 })
 export class AppModule {}

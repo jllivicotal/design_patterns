@@ -5,9 +5,11 @@ import { ValidationPipe } from '@nestjs/common';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   
-  // Configuración de CORS
+  // Configuración dinámica de CORS
+  const rawOrigins = process.env.FRONTEND_ORIGINS || 'http://localhost:5173';
+  const origins = rawOrigins.split(',').map(o => o.trim());
   app.enableCors({
-    origin: ['http://localhost:5173', 'http://localhost:5174'], // Puertos del frontend
+    origin: origins,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,
@@ -24,6 +26,9 @@ async function bootstrap() {
       },
     }),
   );
-  await app.listen(process.env.PORT ?? 3000);
+  const port = parseInt(process.env.PORT || '3000', 10);
+  await app.listen(port, '0.0.0.0');
+  // eslint-disable-next-line no-console
+  console.log(`🚀 Backend escuchando en puerto ${port} (origins permitidos: ${origins.join(', ')})`);
 }
 bootstrap();

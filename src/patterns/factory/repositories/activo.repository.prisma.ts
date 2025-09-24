@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaClient } from '../../../../generated/prisma';
 import { IActivoRepositorio } from './activo.repository.interface';
 import { IActivoFijo, TipoActivo, OpcionesActivo, Computador, Mesa, AutoAF, Silla } from '../models';
 import { ActivoFijoFactorySimple } from '../factories';
+import { PrismaClient } from '@prisma/client';
 
 @Injectable()
 export class ActivoRepositorioPrisma implements IActivoRepositorio {

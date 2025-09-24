@@ -6,4 +6,5 @@ export interface IVehiculoRepositorio {
   eliminar(codigo: number): Promise<void>;
   listar(): Promise<Vehiculo[]>;
   buscarPorId(codigo: number): Promise<Vehiculo | null>;
+  buscarPorPlaca(placa: string): Promise<Vehiculo | null>;
 }
