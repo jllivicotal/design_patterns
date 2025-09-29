@@ -87,3 +87,14 @@ enum TipoActivo {
   SILLA
   OTRO
 }
+
+// Modelo del patrón Adapter - Sistema de Temperatura
+model Bloque {
+  id              Int         @id @default(autoincrement())
+  nombre          String      @unique
+  tipoMedicion    String      // "CELSIUS" o "FAHRENHEIT"
+  temperatura     Float
+  fechaRegistro   DateTime    @default(now())
+  
+  @@map("bloques")
+}
