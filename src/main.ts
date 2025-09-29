@@ -1,12 +1,12 @@
-import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
+import { AppModule } from './app.module';
+import { NestFactory } from '@nestjs/core';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   
   // Configuración dinámica de CORS
-  const rawOrigins = process.env.FRONTEND_ORIGINS || 'http://localhost:5173';
+  const rawOrigins = 'http://localhost:5173';
   const origins = rawOrigins.split(',').map(o => o.trim());
   app.enableCors({
     origin: origins,
@@ -26,7 +26,7 @@ async function bootstrap() {
       },
     }),
   );
-  const port = parseInt(process.env.PORT || '3000', 10);
+  const port = parseInt('3000', 10);
   await app.listen(port, '0.0.0.0');
   // eslint-disable-next-line no-console
   console.log(`🚀 Backend escuchando en puerto ${port} (origins permitidos: ${origins.join(', ')})`);

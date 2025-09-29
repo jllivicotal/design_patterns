@@ -13,8 +13,14 @@ import { ActivoServicio } from './patterns/factory/services';
 import { ActivoRepositorioPrisma } from './patterns/factory/repositories';
 import { ActivoFijoFactorySimple } from './patterns/factory/factories';
 
+// Adapter Pattern - Sistema de Temperatura
+import { AdapterModule } from './patterns/adapter/adapter.module';
+
+// Composite Pattern - Sistema de Archivos
+import { CompositeModule } from './patterns/composite/composite.module';
+
 @Module({
-  imports: [],
+  imports: [AdapterModule, CompositeModule],
   controllers: [
     AppController, 
     VehiculoController,
