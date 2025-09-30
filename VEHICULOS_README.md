@@ -4,7 +4,7 @@ Este proyecto implementa el modelo de vehículos especificado en el diagrama UML
 
 ## Arquitectura Implementada
 
-### 📋 Modelos de Dominio
+### 📋 Modelos de Domini
 - **Vehiculo** (clase abstracta): Clase base con propiedades comunes
 - **Auto**: Extiende Vehiculo, tiene `numPuertas`
 - **Camioneta**: Extiende Vehiculo, tiene `traccion` (4x2 | 4x4)
