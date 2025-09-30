@@ -15,12 +15,14 @@ export class AdapterService {
   /**
    * Obtiene información general del patrón implementado
    */
-  getPatternOverview() {
+  async getPatternOverview() {
+    const blocks = await this.temperatureService.getAvailableBlocks();
+
     return {
       pattern: 'Adapter Pattern',
       implementation: 'Temperature Sensor System',
       description: 'Unifica diferentes tipos de sensores de temperatura bajo una interfaz común',
-      activeBlocks: this.temperatureService.getAvailableBlocks().length
+      activeBlocks: blocks.length,
     };
   }
 
@@ -29,14 +31,19 @@ export class AdapterService {
    */
   async getSystemStats() {
     const bloques = await this.bloqueService.findAll();
-    const activeReadings = this.temperatureService.getAllReadings();
+    const activeReadings = await this.temperatureService.getAllReadings();
     
     return {
       totalBloques: bloques.length,
       activeSensors: activeReadings.length,
-      averageTemperature: activeReadings.length > 0 
-        ? Math.round((activeReadings.reduce((sum, reading) => sum + reading.valueC, 0) / activeReadings.length) * 100) / 100
-        : 0
+      averageTemperature:
+        activeReadings.length > 0
+          ? Math.round(
+              (activeReadings.reduce((sum, reading) => sum + reading.valueC, 0) /
+                activeReadings.length) *
+                100,
+            ) / 100
+          : 0,
     };
   }
 }

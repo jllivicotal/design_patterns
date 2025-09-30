@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Post,
+  Delete,
   Body,
   Param,
   NotFoundException,
@@ -116,6 +117,19 @@ export class FileSystemController {
     this.fileSystemService.addToFolder(addToFolderDto);
     return {
       message: `Elemento ${addToFolderDto.itemName} agregado a ${addToFolderDto.folderPath}`
+    };
+  }
+
+  /**
+   * DELETE /filesystem/item/*
+   * Elimina un archivo o carpeta por ruta
+   */
+  @Delete('item/*')
+  removeItem(@Param('0') path: string) {
+    const result = this.fileSystemService.removeItem(path);
+    return {
+      message: `Elemento eliminado correctamente: ${path}`,
+      ...result,
     };
   }
 }

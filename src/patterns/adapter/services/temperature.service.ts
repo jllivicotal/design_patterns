@@ -3,6 +3,8 @@ import { TemperatureSensor } from '../interfaces';
 import { TemperatureReadingDTO } from '../dto';
 import { CelsiusAdapter, FahrenheitAdapter } from '../adapters';
 import { CelsiusSensor, FahrenheitSensor } from '../sensors';
+import { Bloque } from '@prisma/client';
+import { BloquePrismaRepository } from '../repositories';
 
 /**
  * Servicio de dominio para el sistema de temperatura
@@ -10,64 +12,87 @@ import { CelsiusSensor, FahrenheitSensor } from '../sensors';
  */
 @Injectable()
 export class TemperatureService {
-  private sensors: TemperatureSensor[] = [];
+  constructor(private readonly bloqueRepository: BloquePrismaRepository) {}
 
-  constructor() {
-    // Inicializar con algunos sensores de ejemplo
-    this.initializeSensors();
+  /**
+   * Obtiene todas las lecturas normalizadas en °C
+   */
+  async getAllReadings(): Promise<TemperatureReadingDTO[]> {
+    const bloques = await this.bloqueRepository.findAll();
+    return bloques.map((bloque) => this.buildReadingFromBloque(bloque));
   }
 
   /**
-   * Inicializa sensores de ejemplo para demostrar el patrón Adapter
+   * Obtiene la lectura para un bloque identificado por su nombre (ID lógico)
    */
-  private initializeSensors() {
-    // Sensor Celsius en Bloque A
-    const celsiusSensor = new CelsiusSensor('BLOQUE-A');
-    const celsiusAdapter = new CelsiusAdapter(celsiusSensor);
-    this.registerSensor(celsiusAdapter);
+  async getReadingByBlock(blockId: string): Promise<TemperatureReadingDTO | null> {
+    const numericId = Number(blockId);
+    let bloque: Bloque | null = null;
 
-    // Sensor Fahrenheit en Bloque B
-    const fahrenheitSensor = new FahrenheitSensor('BLOQUE-B');
-    const fahrenheitAdapter = new FahrenheitAdapter(fahrenheitSensor);
-    this.registerSensor(fahrenheitAdapter);
-  }
+    if (!Number.isNaN(numericId)) {
+      bloque = await this.bloqueRepository.findOne(numericId);
+    }
 
-  /**
-   * Registra un nuevo sensor en el sistema
-   */
-  registerSensor(sensor: TemperatureSensor): void {
-    this.sensors.push(sensor);
-  }
+    if (!bloque) {
+      bloque = await this.bloqueRepository.findByNombre(blockId);
+    }
 
-  /**
-   * Obtiene todas las lecturas de temperatura de todos los sensores
-   */
-  getAllReadings(): TemperatureReadingDTO[] {
-    return this.sensors.map(sensor => new TemperatureReadingDTO(
-      sensor.getBlockId(),
-      sensor.getTemperatureC()
-    ));
-  }
-
-  /**
-   * Obtiene la lectura de temperatura de un bloque específico
-   */
-  getReadingByBlock(blockId: string): TemperatureReadingDTO | null {
-    const sensor = this.sensors.find(s => s.getBlockId() === blockId);
-    if (!sensor) {
+    if (!bloque) {
       return null;
     }
-    
+
+    return this.buildReadingFromBloque(bloque);
+  }
+
+  /**
+   * Obtiene el listado de bloques disponibles en el sistema
+   */
+  async getAvailableBlocks(): Promise<Array<{ id: number; name: string; tipoMedicion: 'CELSIUS' | 'FAHRENHEIT' }>> {
+    const bloques = await this.bloqueRepository.findAll();
+    return bloques.map((bloque) => ({
+      id: bloque.id,
+      name: bloque.nombre,
+      tipoMedicion: this.resolveUnit(bloque.tipoMedicion),
+    }));
+  }
+
+  /**
+   * Crea el DTO de lectura utilizando los adaptadores apropiados
+   */
+  private buildReadingFromBloque(bloque: Bloque): TemperatureReadingDTO {
+    const sensor = this.createSensor(bloque);
+    const normalizedValue = sensor.getTemperatureC();
+    const originalUnit = this.resolveUnit(bloque.tipoMedicion);
+
     return new TemperatureReadingDTO(
       sensor.getBlockId(),
-      sensor.getTemperatureC()
+      normalizedValue,
+      bloque.fechaRegistro,
+      bloque.temperatura,
+      originalUnit,
+      bloque.id,
     );
   }
 
   /**
-   * Obtiene la lista de bloques disponibles
+   * Genera el adaptador correcto según el tipo de medición del bloque
    */
-  getAvailableBlocks(): string[] {
-    return this.sensors.map(sensor => sensor.getBlockId());
+  private createSensor(bloque: Bloque): TemperatureSensor {
+    const blockIdentifier = bloque.nombre;
+    const tipoMedicion = (bloque.tipoMedicion || '').toUpperCase();
+
+    if (tipoMedicion === 'FAHRENHEIT') {
+      const sensor = new FahrenheitSensor(blockIdentifier, bloque.temperatura);
+      return new FahrenheitAdapter(sensor);
+    }
+
+    // Por defecto tratamos como Celsius
+    const sensor = new CelsiusSensor(blockIdentifier, bloque.temperatura);
+    return new CelsiusAdapter(sensor);
+  }
+
+  private resolveUnit(tipoMedicion?: string): 'CELSIUS' | 'FAHRENHEIT' {
+    const normalized = (tipoMedicion || 'CELSIUS').toUpperCase();
+    return normalized === 'FAHRENHEIT' ? 'FAHRENHEIT' : 'CELSIUS';
   }
 }

@@ -3,19 +3,16 @@
  * Este sensor no necesita conversión ya que entrega directamente en °C
  */
 export class CelsiusSensor {
-  private blockId: string;
-
-  constructor(blockId: string) {
-    this.blockId = blockId;
-  }
+  constructor(
+    private readonly blockId: string,
+    private readonly temperatureC: number,
+  ) {}
 
   /**
    * Lee la temperatura directamente en grados Celsius
-   * Simula la lectura de un sensor físico
    */
   readCelsius(): number {
-    // Simula una lectura de temperatura entre 15°C y 35°C
-    return Math.round((15 + Math.random() * 20) * 100) / 100;
+    return this.temperatureC;
   }
 
   getBlockId(): string {

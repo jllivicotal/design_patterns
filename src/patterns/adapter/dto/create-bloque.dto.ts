@@ -9,7 +9,7 @@ export class CreateBloqueDto {
 
   @IsString()
   @IsIn(['CELSIUS', 'FAHRENHEIT'])
-  tipoMedicion: string;
+  tipoMedicion: 'CELSIUS' | 'FAHRENHEIT';
 
   @IsNumber()
   temperatura: number;

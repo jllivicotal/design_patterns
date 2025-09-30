@@ -120,6 +120,42 @@ export class FileSystemService {
   }
 
   /**
+   * Elimina un elemento (archivo o carpeta) por ruta
+   */
+  removeItem(path: string) {
+    const normalizedPath = this.normalizePath(path);
+
+    if (!normalizedPath) {
+      throw new BadRequestException('No se puede eliminar la carpeta raíz');
+    }
+
+    const parts = normalizedPath.split('/');
+    const itemName = parts.pop();
+    const parentPath = parts.join('/');
+
+    const parentFolder = parts.length === 0 ? this.root : this.findFolder(parentPath);
+    if (!parentFolder || !itemName) {
+      throw new NotFoundException(`Carpeta padre no encontrada para la ruta: ${path}`);
+    }
+
+    const child = parentFolder.getChildren().find((candidate) => candidate.getName() === itemName);
+
+    if (!child) {
+      throw new NotFoundException(`Elemento no encontrado: ${path}`);
+    }
+
+    parentFolder.remove(child);
+
+    return {
+      deleted: {
+        name: child.getName(),
+        type: child instanceof Folder ? 'folder' : 'file',
+        size: child.getSize(),
+      },
+    };
+  }
+
+  /**
    * Obtiene el tamaño total del sistema de archivos
    */
   getTotalSize(): number {
@@ -155,7 +191,7 @@ export class FileSystemService {
       name: component.getName(),
       type: isFolder ? 'folder' : 'file',
       size: component.getSize(),
-      path: path
+      path: this.formatPath(path)
     };
 
     if (!isFolder) {
@@ -168,7 +204,7 @@ export class FileSystemService {
       // Es una carpeta, agregar hijos
       const folder = component as Folder;
       dto.children = folder.getChildren().map((child, index) => 
-        this.convertToDto(child, `${path}/${child.getName()}`)
+        this.convertToDto(child, this.joinPaths(path, child.getName()))
       );
     }
 
@@ -194,7 +230,13 @@ export class FileSystemService {
    * Busca un elemento por ruta completa
    */
   private findItemByPath(path: string): FileComponent | null {
-    const parts = path.split('/').filter(part => part.length > 0);
+    const normalizedPath = this.normalizePath(path);
+
+    if (!normalizedPath) {
+      return this.root;
+    }
+
+    const parts = normalizedPath.split('/').filter(part => part.length > 0);
     let current: FileComponent = this.root;
 
     for (const part of parts) {
@@ -248,5 +290,47 @@ export class FileSystemService {
     }
     
     return count;
+  }
+
+  /**
+   * Normaliza una ruta asegurando un formato consistente
+   */
+  private normalizePath(path: string): string {
+    if (!path) {
+      return '';
+    }
+
+    return path
+      .replace(/\\/g, '/') // Convertir backslashes a slashes
+      .replace(/\s+/g, '') // Eliminar espacios en blanco
+      .replace(/\/+/g, '/') // Colapsar slashes repetidos
+      .replace(/^\/+/, '') // Eliminar slash inicial
+      .replace(/\/+$/, ''); // Eliminar slash final
+  }
+
+  /**
+   * Une rutas asegurando el formato estándar
+   */
+  private joinPaths(base: string, segment: string): string {
+    const normalizedBase = this.normalizePath(base);
+    const normalizedSegment = this.normalizePath(segment);
+
+    if (!normalizedBase) {
+      return this.formatPath(normalizedSegment);
+    }
+
+    if (!normalizedSegment) {
+      return this.formatPath(normalizedBase);
+    }
+
+    return this.formatPath(`${normalizedBase}/${normalizedSegment}`);
+  }
+
+  /**
+   * Formatea la ruta para representación externa (siempre inicia con /)
+   */
+  private formatPath(path: string): string {
+    const normalized = this.normalizePath(path);
+    return `/${normalized}`.replace(/\/+/g, '/');
   }
 }

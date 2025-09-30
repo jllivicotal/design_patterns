@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../prisma/prisma.service';
-import { CreateBloqueDto, UpdateBloqueDto } from '../dto';
-import { BloqueRepository } from './bloque.repository.interface';
+import { BloqueRepository, CreateBloqueData, UpdateBloqueData } from './bloque.repository.interface';
 
 @Injectable()
 export class BloquePrismaRepository implements BloqueRepository {
@@ -19,16 +18,22 @@ export class BloquePrismaRepository implements BloqueRepository {
     });
   }
 
-  async create(createBloqueDto: CreateBloqueDto) {
-    return this.prisma.bloque.create({
-      data: createBloqueDto
+  async findByNombre(nombre: string) {
+    return this.prisma.bloque.findUnique({
+      where: { nombre }
     });
   }
 
-  async update(id: number, updateBloqueDto: UpdateBloqueDto) {
+  async create(data: CreateBloqueData) {
+    return this.prisma.bloque.create({
+      data
+    });
+  }
+
+  async update(id: number, data: UpdateBloqueData) {
     return this.prisma.bloque.update({
       where: { id },
-      data: updateBloqueDto
+      data
     });
   }
 
