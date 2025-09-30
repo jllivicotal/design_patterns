@@ -124,7 +124,7 @@ export class FileSystemController {
    * DELETE /filesystem/item/*
    * Elimina un archivo o carpeta por ruta
    */
-  @Delete('item/*')
+  @Delete('item/*items')
   removeItem(@Param('0') path: string) {
     const result = this.fileSystemService.removeItem(path);
     return {
