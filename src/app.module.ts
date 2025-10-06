@@ -19,8 +19,14 @@ import { AdapterModule } from './patterns/adapter/adapter.module';
 // Composite Pattern - Sistema de Archivos
 import { CompositeModule } from './patterns/composite/composite.module';
 
+// Memento Pattern - Solicitudes de Certificado
+import { MementoModule } from './patterns/memento/memento.module';
+
+// Command Pattern - Editor de Texto
+import { CommandModule } from './patterns/command/command.module';
+
 @Module({
-  imports: [AdapterModule, CompositeModule],
+  imports: [AdapterModule, CompositeModule, MementoModule, CommandModule],
   controllers: [
     AppController, 
     VehiculoController,
